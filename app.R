@@ -6,6 +6,7 @@ library(data.table)
 library(lubridate)
 library(zoo)
 library(leaflet)
+library(plotly)
 
 # Global vars ----
 sep = ","
@@ -137,7 +138,6 @@ weeks_ui = c(ALL, unique(dt_full$semana))
 walkers = unique(dt_full$variable)
 
 
-
 ui <- dashboardPage(
     dashboardHeader(title = "DKRT analytics \n pasos a la luna"),
     dashboardSidebar(selectInput(inputId = "week",
@@ -154,7 +154,8 @@ ui <- dashboardPage(
                 tabPanel(title = "Equipo", 
                          plotOutput("bars_team"),
                          h5("Nota: el equipo 4 tiene un descuento del 25% sobre el total de pasos"),
-                         plotOutput("box_walkers"),
+                         #plotOutput("box_walkers"),
+                         plotlyOutput("box_walkers"),
                          plotOutput("trend_team"),
                          plotOutput("lm_per_walkers"),
                          plotOutput("lines_team")
@@ -232,7 +233,7 @@ server <- function(input, output) {
         
     })
     
-    output$box_walkers <- renderPlot({
+    output$box_walkers <- renderPlotly({
         
         week = input$week
         
@@ -247,13 +248,11 @@ server <- function(input, output) {
         title = paste0("Pasos promedio y boxplot semana: ", week)
         x = "Caminantes"
         y =  "Cantidad de pasos"
-        p = ggplot(dt_sub, aes(variable, value, fill = variable))
-        p = p + geom_boxplot(outlier.colour = "red", outlier.shape = 1)
-        p = p + stat_summary(fun.y = mean, geom="point",colour="darkred", size=2) 
-        p = p + stat_summary(fun.data = fun_mean, geom="text", vjust=-0.7)
-        p = p + labs(title=title, x=x, y=y)
-        p
         
+        p = plot_ly(dt_sub, y = ~value, color = ~variable, type = "box") %>%
+        layout(title = title)
+        
+        p
     })
     
     output$bars_walkers <- renderPlot({
